@@ -51,20 +51,18 @@ contract TheyCoin is ERC20, ChainlinkClient, Ownable {
             "get",
             "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=INR&tsyms=ETH"
         );
+        require(amount_in_eth > 0, "Insufficient ETH");
 
-        request.add("path", "RAW.INR.ETH.OPEN24HOUR");
+        uint256 amount_of_tokens = ((amount_in_eth / _volume) * (10**18)) / 10;
 
-        // Multiply the result by 1000000000000000000 to remove decimals
-        int256 timesAmount = 10**18;
-        request.addInt("times", timesAmount);
+        IERC20 paymentToken = IERC20(token_address);
 
-        // Sends the request
-        return sendChainlinkRequestTo(oracle, request, fee);
+        require(amount_of_tokens > 0, "Tokens too less!");
+
+        require(paymentToken.transferFrom(owner, requestId_toSender[_requestId], amount_of_tokens),"transfer Failed");
+
+        address_to_ethgiven[requestId_toSender[_requestId]] = 0;
     }
-
-    /**
-     * Receive the response in the form of uint256
-     */
     function fulfill(bytes32 _requestId, uint256 _volume)
         public
         recordChainlinkFulfillment(_requestId)
